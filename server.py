@@ -164,6 +164,7 @@ def handle_client(client_socket, addr):
 
     # Initial join to lobby
     r.sadd("room:lobby", username)
+    logger.info(f"{username} joined the lobby") # log for initial join
     publish_message("BROADCAST", username, f"{username} joined the lobby", room="lobby")
 
     try:
@@ -182,16 +183,19 @@ def handle_client(client_socket, addr):
             elif data == "/rooms":
                 keys = r.keys("room:*")
                 room_names = [k.split(":")[1] for k in keys]
+                logger.info(f"{username} requested active rooms list")
                 client_socket.send(f"[SYSTEM] Active Rooms: {', '.join(room_names)}".encode())
 
             elif data.startswith("/subscribe "):
                 target = data.split(" ")[1]
                 r.sadd(f"subscriptions:{target}", username)
+                logger.info(f"{username} subscribed to {target}")
                 client_socket.send(f"[SYSTEM] Subscribed to {target}".encode())
             
             elif data.startswith("/unsubscribe "):
                 target = data.split(" ")[1]
                 r.srem(f"subscriptions:{target}", username)
+                logger.info(f"{username} unsubscribed from {target}")
                 client_socket.send(f"[SYSTEM] Unsubscribed from {target}".encode())
 
             # --- MESSAGING ---
