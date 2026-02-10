@@ -34,7 +34,7 @@ except redis.ConnectionError:
 local_clients = {}       # {socket: username}
 local_clients_lock = threading.Lock()
 
-# --- DB INITIALIZATION (Point 5) ---
+# --- DB INITIALIZATION ---
 def init_db():
     """Seeds the Redis database with users if they don't exist."""
     # Only seed if the 'users' hash doesn't exist to avoid overwriting
@@ -176,7 +176,7 @@ def handle_client(client_socket, addr):
                 new_room = data.split(" ")[1]
                 switch_room(client_socket, username, new_room)
             
-            elif data.startswith("/leave"): # (Point 1)
+            elif data.startswith("/leave"):
                 switch_room(client_socket, username, "lobby")
 
             elif data == "/rooms":
@@ -210,7 +210,7 @@ def handle_client(client_socket, addr):
 def switch_room(client_socket, username, new_room):
     old_room = r.hget("user_sessions", username)
     
-    # Update Redis (Point 3 & 4)
+    # Update Redis
     if old_room:
         r.srem(f"room:{old_room}", username) # Correct use of srem
         publish_message("BROADCAST", username, f"{username} left {old_room}", room=old_room)
@@ -228,7 +228,7 @@ def publish_message(msg_type, sender, content, room=None):
     r.publish("global_chat", json.dumps(message))
 
 def cleanup_client(client_socket, username):
-    """Removes user from Redis and Local state (Point 2 & 3)."""
+    """Removes user from Redis and Local state."""
     with local_clients_lock:
         if client_socket in local_clients:
             local_clients.pop(client_socket)
