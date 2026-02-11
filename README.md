@@ -20,6 +20,7 @@ This implementation satisfies all requirements of Assignment 1.
 
 - Thread-based TCP chat server (blocking I/O)
 - Secure authentication using bcrypt
+- User registration for new accounts
 - Duplicate login policy: **Force Logout Existing Session**
 - Chat rooms with scoped message broadcasting
 - Publish–Subscribe messaging model
@@ -119,6 +120,29 @@ or
 ```
 
 to pass TLS verification.
+
+---
+
+## Authentication
+
+### Login
+
+Use existing credentials to log in. The system includes pre-seeded test accounts (see Default Accounts section).
+
+### Registration
+
+New users can register by selecting the `register` option when prompted. The system will:
+
+1. Create a new account with the provided username and password
+2. Hash the password using bcrypt
+3. Store the credentials in Redis
+4. Automatically log in the user after successful registration
+
+Registration fails if:
+- Username already exists
+- Server error occurs
+
+After registration, the new account persists across all server instances via Redis.
 
 ---
 
@@ -238,6 +262,12 @@ Each port corresponds to a different server container.
 
 You can connect multiple clients to any port.
 
+When prompted, choose:
+- **`login`** to use an existing account
+- **`register`** to create a new account
+
+Then provide username and password.
+
 ---
 
 ## Default Accounts
@@ -252,9 +282,24 @@ The server seeds test accounts automatically:
 
 Passwords are stored hashed using bcrypt.
 
+**Note:** New users can register their own accounts using the registration flow. Registered accounts are stored in Redis and available to all server instances.
+
 ---
 
 ## Testing Scenarios
+
+### User Registration Test
+
+1. Connect a client
+2. Choose `register`
+3. Enter a new username and password
+4. Verify successful registration and automatic login
+5. Disconnect and reconnect
+6. Login with the newly created credentials
+
+This confirms persistent account creation across server instances.
+
+---
 
 ### Duplicate Login Test
 
@@ -328,7 +373,6 @@ docker-compose up --build
 ## Limitations
 
 - Self-signed TLS (testing only)
-- No persistent account creation API
 - Redis is a single point of failure
 
 ---
