@@ -52,14 +52,35 @@ def start_client(host, port):
         return
 
     try:
+        # Choose between login and registration
+        choice = input("Type 'login' to login or 'register' to create a new account: ").strip().lower()
+        
         username = input("Username: ")
         password = input("Password: ")
-        client_socket.send(f"LOGIN {username} {password}".encode())
-
-        response = client_socket.recv(1024).decode()
-        if not response.startswith("AUTH_SUCCESS"):
-            print(f"Login failed: {response}")
-            return
+        
+        if choice == 'register':
+            # Send registration request
+            client_socket.send(f"REGISTER {username} {password}".encode())
+            response = client_socket.recv(1024).decode()
+            
+            if response.startswith("REGISTER_SUCCESS"):
+                print("Registration successful! Now logging you in...")
+                # After successful registration, server waits for login
+                client_socket.send(f"LOGIN {username} {password}".encode())
+                response = client_socket.recv(1024).decode()
+                if not response.startswith("AUTH_SUCCESS"):
+                    print(f"Login after registration failed: {response}")
+                    return
+            else:
+                print(f"Registration failed: {response}")
+                return
+        else:
+            # Send login request
+            client_socket.send(f"LOGIN {username} {password}".encode())
+            response = client_socket.recv(1024).decode()
+            if not response.startswith("AUTH_SUCCESS"):
+                print(f"Login failed: {response}")
+                return
 
         print("Login successful! Commands: /join <room>, /leave, /rooms, /subscribe <user>")
         

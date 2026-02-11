@@ -117,13 +117,51 @@ def handle_chat_message(data):
         except Exception:
             pass # Socket might be closed, cleanup handles this
 
+def handle_registration(client_socket, username, password):
+    """
+    Registers a new user in Redis.
+    """
+    try:
+        # Check if username already exists
+        if r.hexists("users", username):
+            client_socket.send("REGISTER_FAILED: Username already exists.".encode())
+            logger.info(f"Registration failed for {username} - already exists")
+            return False
+        
+        # Hash password and store in Redis
+        hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        r.hset("users", username, hashed_password)
+        
+        client_socket.send("REGISTER_SUCCESS".encode())
+        logger.info(f"New user registered: {username}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Registration error: {e}")
+        client_socket.send("REGISTER_FAILED: Server error.".encode())
+        return False
+
 def handle_authentication(client_socket):
     """
     Authenticates against Redis and handles Force Logout.
+    Also supports user registration.
     """
     try:
         data = client_socket.recv(1024).decode('utf-8').strip().split()
-        if len(data) == 3 and data[0] == "LOGIN":
+        
+        # Handle REGISTER command
+        if len(data) == 3 and data[0] == "REGISTER":
+            username = data[1]
+            password = data[2]
+            
+            if handle_registration(client_socket, username, password):
+                # After successful registration, wait for login
+                return handle_authentication(client_socket)
+            else:
+                return None
+        
+        # Handle LOGIN command
+        elif len(data) == 3 and data[0] == "LOGIN":
             username = data[1]
             password = data[2]
 
