@@ -172,6 +172,11 @@ Clients verify the server using this certificate.
 
 ### 2. Start the System
 
+Firstly you want to make sure there are no hidden, corrupted containers from previous attempts blocking your ports. Run this command to wipe the slate clean:
+```bash
+docker-compose down -v --remove-orphans
+```
+
 To launch Redis and multiple server instances:
 
 ```bash
